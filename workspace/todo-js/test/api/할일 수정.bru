@@ -1,0 +1,17 @@
+meta {
+  name: 할일 수정
+  type: http
+  seq: 4
+}
+
+patch {
+  url: http://localhost:3300/todos/3
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "done": true
+  }
+}

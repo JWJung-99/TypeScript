@@ -1,0 +1,18 @@
+meta {
+  name: 할일 댓글 조회
+  type: http
+  seq: 6
+}
+
+post {
+  url: http://localhost:3300/comments
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "title": "댓글",
+    "todoId": "2"
+  }
+}
