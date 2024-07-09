@@ -1,8 +1,9 @@
+import { TodoItemData } from "#types/todo";
 import Button from "@components/Button";
 import useMutation from "@hooks/useMutation";
 import { useState } from "react";
 
-function TodoInput({ refetch }) {
+function TodoInput({ refetch }: { refetch: () => Promise<void> }) {
   const [title, setTitle] = useState("");
   const { send } = useMutation("/todos", {
     method: "POST",
@@ -10,16 +11,22 @@ function TodoInput({ refetch }) {
 
   const handleAdd = async () => {
     try {
-      await send({
+      const result = await send<TodoItemData>({
         body: JSON.stringify({
           title,
           done: false,
         }),
       });
 
+      console.log(result.id);
+
       refetch();
     } catch (err) {
-      console.error(err);
+      if (err instanceof TypeError) {
+        console.error("Network Error");
+      } else if (err instanceof Error) {
+        console.error(err.message);
+      }
     }
   };
 
