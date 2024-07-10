@@ -1,44 +1,48 @@
 import Button from "@components/Button";
 import Pagination from "@components/Pagination";
 import Search from "@components/Search";
+import useDebounce from "@hooks/useDebounce";
+import useFetch from "@hooks/useFetch";
 import ListItem from "@pages/community/ListItem";
 import { userState } from "@recoil/user/atoms";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 
 function List() {
+  const [keyword, setKeyword] = useState("");
   const navigate = useNavigate();
   const user = useRecoilValue(userState);
-  const [searchParams, setSearchParams] = useSearchParams();
+  const limit = 10;
   const { type } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const page = searchParams.get("page") || 1;
+
+  // 디바운스
+  const debouncedKeyword = useDebounce(keyword, 500);
+
+  const { loading, data, error, refetch } = useFetch(
+    `/posts?type=${type}&limit=${limit}&page=${page}&keyword=${keyword}`
+  );
+
+  useEffect(() => {
+    searchParams.set("page", 1);
+    setSearchParams(searchParams);
+    setKeyword("");
+    refetch();
+  }, [type]);
+
+  useEffect(() => {
+    searchParams.set("page", 1);
+    setSearchParams(searchParams);
+    refetch();
+  }, [debouncedKeyword]);
+
+  useEffect(() => {
+    refetch();
+  }, [page]);
+
   let boardTitle = "";
-
-  const { loading, data, error, refetch } = useQuery({
-    queryKey: ["post", type],
-    queryFn: async () => {
-      const url = new URL(
-        `${import.meta.env.VITE_API_SERVER}/posts?type=${type}`
-      );
-
-      const params = {
-        keyword: searchParams.get("keyword"),
-      };
-
-      if (params.keyword) {
-        Object.keys(params).forEach((key) =>
-          url.searchParams.append(key, params[key])
-        );
-      }
-
-      return fetch(url, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }).then((res) => res.json());
-    },
-    suspense: true,
-  });
 
   switch (type) {
     case "info":
@@ -54,12 +58,6 @@ function List() {
       boardTitle = "정보공유";
   }
 
-  const handleSearch = (keyword) => {
-    searchParams.set("keyword", keyword);
-    // searchParams.set("page", 1);
-    setSearchParams();
-  };
-
   return (
     <main className="min-w-80 p-10">
       <div className="text-center py-4">
@@ -69,7 +67,7 @@ function List() {
       </div>
       <div className="flex justify-end mr-4">
         {/* 검색 */}
-        <Search handleSearch={handleSearch} />
+        <Search keyword={keyword} setKeyword={setKeyword} />
         {user && (
           <Button onClick={() => navigate(`/${type}/new`)}>글작성</Button>
         )}
@@ -135,7 +133,7 @@ function List() {
         <hr />
 
         {/* 페이지네이션 */}
-        <Pagination />
+        <Pagination type={type} totalPages={data?.pagination.totalPages} />
       </section>
     </main>
   );

@@ -6,8 +6,6 @@ import { useRecoilValue } from "recoil";
 function CommentItem({ data, refetch, postId }) {
   const user = useRecoilValue(userState);
 
-  console.log(data);
-
   const handleDelete = async (id) => {
     try {
       const response = await fetch(

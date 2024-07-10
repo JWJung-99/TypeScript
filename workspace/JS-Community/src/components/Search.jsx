@@ -1,19 +1,23 @@
 import Submit from "@components/Submit";
-import { useForm } from "react-hook-form";
+import { useRef } from "react";
 
-function Search({ handleSearch }) {
-  const { register, handleSubmit } = useForm();
-
-  const onSubmit = async (formData) => {
-    handleSearch(formData.keyword);
-  };
+function Search({ keyword, setKeyword }) {
+  const inputRef = useRef();
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        setKeyword(inputRef.current.value);
+      }}
+    >
       <input
+        ref={inputRef}
+        id="search"
         className="dark:bg-gray-600 bg-gray-100 p-1 rounded"
         type="text"
-        {...register("keyword")}
+        value={keyword}
+        onChange={(e) => setKeyword(e.target.value)}
       />
       <Submit>검색</Submit>
     </form>

@@ -1,16 +1,29 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
-function Pagination() {
+function Pagination({ type, totalPages }) {
+  const arr = Array.from({ length: totalPages }, (_, i) => i + 1);
+  const [searchParams] = useSearchParams();
+  const page = searchParams.get("page");
+
+  const links = arr.map((item) => {
+    let selected = false;
+    if (item === Number(page)) selected = true;
+
+    return (
+      <li
+        key={item}
+        className={`${
+          selected ? "font-bold text-blue-700" : "text-base text-gray-700"
+        } text-lg`}
+      >
+        <Link to={`/${type}?page=${item}`}>{item}</Link>
+      </li>
+    );
+  });
+
   return (
     <div>
-      <ul className="flex justify-center gap-3 m-4">
-        <li className="text-bold text-blue-700">
-          <Link to="/info?page=1">1</Link>
-        </li>
-        <li>
-          <Link to="/info?page=2">2</Link>
-        </li>
-      </ul>
+      <ul className="flex justify-center gap-3 m-4">{links}</ul>
     </div>
   );
 }
