@@ -1,8 +1,21 @@
 import Submit from "@components/Submit";
+import useMutation from "@hooks/useMutation";
 import { userState } from "@recoil/user/atoms";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { useSetRecoilState } from "recoil";
+
+async function login(formData) {
+  const res = await fetch(`${import.meta.env.VITE_API_SERVER}/users/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(formData),
+  });
+
+  return res.json();
+}
 
 function Login() {
   const setUser = useSetRecoilState(userState);
@@ -20,46 +33,84 @@ function Login() {
 
   const navigate = useNavigate();
 
-  const onSubmit = async (formData) => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_SERVER}/users/login`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        }
-      );
-
-      const result = await response.json();
-
-      if (result.ok === 1) {
+  const { mutate } = useMutation({
+    mutationFn(formData) {
+      return login(formData); // mutate가 호출될 때 mutationFn이 실행 => handeSubmit 검증이 끝나면 mutate 호출
+    },
+    onSuccess(resData) {
+      // 서버와 통신 성공
+      if (resData.ok) {
+        // 로그인 상태 저장
         setUser({
-          _id: result.item._id,
-          name: result.item.name,
-          email: result.item.email,
-          profileImage: result.item.profileImage.path
-            ? result.item.profileImage.path
+          _id: resData.item._id,
+          name: resData.item.name,
+          email: resData.item.email,
+          profileImage: resData.item.profileImage.path
+            ? resData.item.profileImage.path
             : "/files/00-sample/XPTwYP2nb.png",
-          token: result.item.token,
+          token: resData.item.token,
         });
+
+        alert("로그인 완료!");
+        navigate("/");
       } else {
-        if (result.errors) {
-          result.errors.forEach((error) =>
+        // API 서버가 에러를 응답
+        if (resData.errors) {
+          resData.errors.forEach((error) =>
             setError(error.path, { message: error.msg })
           );
-        } else {
-          throw new Error(result.message);
+        } else if (resData.message) {
+          alert(resData.message);
         }
       }
+    },
+    onError(err) {
+      // 네트워크 에러 발생
+      console.error(err.message);
+      alert("잠시 후 다시 시도해주세요.");
+    },
+  });
 
-      navigate("/");
-    } catch (err) {
-      alert(err.message);
-    }
-  };
+  // const onSubmit = async (formData) => {
+  //   try {
+  //     const response = await fetch(
+  //       `${import.meta.env.VITE_API_SERVER}/users/login`,
+  //       {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //         },
+  //         body: JSON.stringify(formData),
+  //       }
+  //     );
+
+  //     const result = await response.json();
+
+  //     if (result.ok === 1) {
+  //       setUser({
+  //         _id: result.item._id,
+  //         name: result.item.name,
+  //         email: result.item.email,
+  //         profileImage: result.item.profileImage.path
+  //           ? result.item.profileImage.path
+  //           : "/files/00-sample/XPTwYP2nb.png",
+  //         token: result.item.token,
+  //       });
+  //     } else {
+  //       if (result.errors) {
+  //         result.errors.forEach((error) =>
+  //           setError(error.path, { message: error.msg })
+  //         );
+  //       } else {
+  //         throw new Error(result.message);
+  //       }
+  //     }
+
+  //     navigate("/");
+  //   } catch (err) {
+  //     alert(err.message);
+  //   }
+  // };
 
   return (
     <main className="min-w-80 p-5 flex-grow flex items-center justify-center">
@@ -70,7 +121,7 @@ function Login() {
           </h2>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(mutate)}>
           <div className="mb-4">
             <label
               className="block text-gray-700 dark:text-gray-200 mb-2"
