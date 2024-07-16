@@ -10,16 +10,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@tanstack/react-query": "^5.50.1",
-    "@tanstack/react-query-devtools": "^5.50.1",
-    "immer": "^10.1.1",
-    "lodash": "^4.17.21",
+    "@tanstack/react-query": "^5.51.1",
+    "@tanstack/react-query-devtools": "^5.51.1",
     "react": "^18.3.1",
-    "react-csspin": "^0.0.4",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.52.1",
-    "react-infinite-scroller": "^1.2.6",
     "react-router-dom": "^6.24.1",
+    "react-spinners": "^0.14.1",
     "recoil": "^0.7.7",
     "recoil-persist": "^5.1.0",
     "zustand": "^4.5.4"

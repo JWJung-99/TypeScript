@@ -4,12 +4,12 @@ import Community from "@pages/community";
 import Detail from "@pages/community/Detail";
 import List from "@pages/community/List";
 import New from "@pages/community/New";
-import CommentList from "@pages/community/CommentList";
 import Login from "@pages/user/Login";
 import Signup from "@pages/user/Signup";
 import { createBrowserRouter } from "react-router-dom";
 import Edit from "@pages/community/Edit";
 
+// React Router v6.4(2022.08.23)
 const router = createBrowserRouter([
   {
     path: "/",
@@ -18,39 +18,33 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Community />,
+        element: <Community />
       },
       {
         path: ":type",
-        element: <List />,
+        element: <List />
       },
       {
         path: ":type/:_id",
-        element: <Detail />,
-        children: [
-          {
-            index: true,
-            element: <CommentList />,
-          },
-        ],
+        element: <Detail />
       },
       {
         path: ":type/new",
-        element: <New />,
+        element: <New />
       },
       {
         path: ":type/:_id/edit",
-        element: <Edit />,
+        element: <Edit />
       },
       {
         path: "user/login",
-        element: <Login />,
+        element: <Login />
       },
       {
         path: "user/signup",
-        element: <Signup />,
+        element: <Signup />
       },
-    ],
+    ]
   },
 ]);
 

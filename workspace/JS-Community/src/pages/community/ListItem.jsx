@@ -1,19 +1,15 @@
-import { useNavigate } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
-function ListItem({ data, type }) {
-  const navigate = useNavigate();
+export default function ListItem({ item }) {
+  const { type } = useParams();
 
-  const items = data?.item.map((item) => (
-    <tr
-      key={item._id}
-      className="border-b border-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition duration-300 ease-in-out"
-    >
+  return (
+    <tr className="border-b border-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition duration-300 ease-in-out">
       <td className="p-2 text-center">{item._id}</td>
-      <td
-        className="p-2 truncate indent-4 cursor-pointer"
-        onClick={() => navigate(`/${type}/${item._id}`)}
-      >
-        {item.title}
+      <td className="p-2 truncate indent-4">
+        <Link to={`/${type}/${item._id}`} className="cursor-pointer">
+          {item.title}
+        </Link>
       </td>
       <td className="p-2 text-center truncate">{item.user.name}</td>
       <td className="p-2 text-center hidden sm:table-cell">{item.views}</td>
@@ -21,12 +17,8 @@ function ListItem({ data, type }) {
         {item.repliesCount}
       </td>
       <td className="p-2 truncate text-center hidden sm:table-cell">
-        {item.createdAt}
+        {item.updatedAt}
       </td>
     </tr>
-  ));
-
-  return <>{items}</>;
+  );
 }
-
-export default ListItem;

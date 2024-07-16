@@ -1,21 +1,22 @@
-import Submit from "@components/Submit";
-import { useRef } from "react";
+import Submit from "@/components/Submit";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-function Search({ keyword, setKeyword }) {
-  const inputRef = useRef();
+export default function Search() {
+  const [keyword, setKeyword] = useState("");
+  const navigate = useNavigate();
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    navigate(`?keyword=${keyword}`);
+  };
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        setKeyword(inputRef.current.value);
-      }}
-    >
+    <form action="#" onSubmit={handleSearch}>
       <input
-        ref={inputRef}
-        id="search"
         className="dark:bg-gray-600 bg-gray-100 p-1 rounded"
         type="text"
+        name="keyword"
         value={keyword}
         onChange={(e) => setKeyword(e.target.value)}
       />
@@ -23,5 +24,3 @@ function Search({ keyword, setKeyword }) {
     </form>
   );
 }
-
-export default Search;

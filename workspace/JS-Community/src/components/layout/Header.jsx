@@ -1,12 +1,16 @@
-import Button from "@components/Button";
-import Theme from "@components/Theme";
-import { userState } from "@recoil/user/atoms";
-import { Link, useNavigate } from "react-router-dom";
+import Submit from "@/components/Submit";
+import Theme from "@/components/Theme";
+import { userState } from "@/recoil/user/atoms";
+import { Link } from "react-router-dom";
 import { useRecoilState } from "recoil";
 
-function Header() {
+export default function Header() {
   const [user, setUser] = useRecoilState(userState);
-  const navigate = useNavigate();
+
+  const handleLogout = (e) => {
+    e.preventDefault();
+    setUser(null);
+  };
 
   return (
     <header className="px-8 min-w-80 bg-slate-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200 transition-color duration-500 ease-in-out">
@@ -16,6 +20,8 @@ function Header() {
             <img
               className="mr-3 h-6 sm:h-9"
               src="/images/favicon.svg"
+              width="40"
+              height="40"
               alt="로고 이미지"
             />
             <span className="text-lg font-bold">멋사컴</span>
@@ -27,7 +33,7 @@ function Header() {
               <Link to="/info">정보공유</Link>
             </li>
             <li className="hover:text-amber-500 hover:font-semibold">
-              <Link to="/post">자유게시판</Link>
+              <Link to="/free">자유게시판</Link>
             </li>
             <li className="hover:text-amber-500 a:font-semibold">
               <Link to="/qna">질문게시판</Link>
@@ -36,47 +42,42 @@ function Header() {
         </div>
 
         <div className="w-1/2 order-1 flex justify-end items-center md:order-2 md:w-auto">
-          {/* 로그인 후 */}
-
           {user ? (
-            <p className="flex items-center">
-              <img
-                className="w-8 rounded-full mr-2"
-                src={`${import.meta.env.VITE_API_SERVER}/${user.profileImage}`}
-              />
-              {user.name}님 :)
-              <Button
-                size="md"
-                bgColor="gray"
-                onClick={() => {
-                  setUser(null);
-                  navigate("/user/login");
-                }}
-              >
-                로그아웃
-              </Button>
-            </p>
+            <form action="/" onSubmit={handleLogout}>
+              <p className="flex items-center">
+                <img
+                  className="w-8 rounded-full mr-2"
+                  src={`${import.meta.env.VITE_API_SERVER}${user.profile}`}
+                  width="40"
+                  height="40"
+                  alt="프로필 이미지"
+                />
+                {user.name} 님 :)
+                <Submit bgColor="gray" size="sm">
+                  로그아웃
+                </Submit>
+              </p>
+            </form>
           ) : (
             <div className="flex justify-end">
-              <Button size="sm" onClick={() => navigate("/user/login")}>
+              <Link
+                to="/user/login"
+                className="bg-orange-500 py-1 px-2 text-sm text-white font-semibold ml-2 hover:bg-amber-400 rounded"
+              >
                 로그인
-              </Button>
-              <Button
-                size="sm"
-                bgColor="gray"
-                onClick={() => navigate("/user/signup")}
+              </Link>
+              <Link
+                to="/user/signup"
+                className="bg-gray-900 py-1 px-2 text-sm text-white font-semibold ml-2 hover:bg-amber-400 rounded"
               >
                 회원가입
-              </Button>
+              </Link>
             </div>
           )}
 
-          {/* 라이트/다크 모드 전환 */}
           <Theme />
         </div>
       </nav>
     </header>
   );
 }
-
-export default Header;

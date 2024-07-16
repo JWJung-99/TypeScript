@@ -1,75 +1,79 @@
-import Button from "@components/Button";
-import useFetch from "@hooks/useFetch";
-import useMutation from "@hooks/useMutation";
-import CommentList from "@pages/community/CommentList";
-import { userState } from "@recoil/user/atoms";
-import { useNavigate, useParams } from "react-router-dom";
+import Submit from "@/components/Submit";
+import CommentList from "@/pages/community/CommentList";
+import { userState } from "@/recoil/user/atoms";
+import { useQuery } from "@tanstack/react-query";
+import { Link, useParams } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 
-function Detail() {
-  const navigate = useNavigate();
+const SERVER = import.meta.env.VITE_API_SERVER;
+
+async function fetchPost(_id) {
+  const url = `${SERVER}/posts/${_id}`;
+  const res = await fetch(url); // Promise 객체 반환
+  return res.json();
+}
+
+export default function Detail() {
   const { type, _id } = useParams();
-  const { data } = useFetch(`/posts/${_id}`);
-  const { send } = useMutation(`/posts/${_id}`, {
-    method: "DELETE",
+  const { isLoading, data } = useQuery({
+    queryKey: [type, _id],
+    queryFn: () => {
+      return fetchPost(_id);
+    },
+    // 응답 받은 데이터를 가공: queryFn의 return 값이 select의 인자 값 => select의 return 값이 최종 data
+    select: (response) => response.item,
+    staleTime: 1000 * 3,
   });
   const user = useRecoilValue(userState);
-
-  const handleDelete = async () => {
-    try {
-      const response = await send({
-        headers: {
-          Authorization: `Bearer ${user.token.accessToken}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("에러가 발생했습니다!");
-      }
-
-      navigate(`/${type}`);
-    } catch (err) {
-      alert(err.message);
-    }
-  };
 
   return (
     <main className="container mx-auto mt-4 px-4">
       <section className="mb-8 p-4">
-        <div className="font-semibold text-xl">제목 : {data?.item.title}</div>
-        <div className="text-right text-gray-400">
-          작성자 : {data?.item.user.name}
-        </div>
-        <div className="mb-4">
-          <div>
-            <pre className="font-roboto w-full p-2 whitespace-pre-wrap">
-              {data?.item.content}
-            </pre>
+        <form action={`/${type}`}>
+          <div className="font-semibold text-xl">제목 : {data?.title}</div>
+          <div className="text-right text-gray-400">
+            작성자 : {data?.user.name}
           </div>
-          <hr />
-        </div>
-        <div className="flex justify-end my-4">
-          <Button onClick={() => navigate(-1)}>목록</Button>
-          {user?._id === data?.item.user._id && (
-            <>
-              <Button
-                bgColor="gray"
-                onClick={() => navigate(`/${type}/${_id}/edit`)}
-              >
-                수정
-              </Button>
-              <Button bgColor="red" onClick={handleDelete}>
-                삭제
-              </Button>
-            </>
-          )}
-        </div>
+          <div className="mb-4">
+            <div>
+              <pre className="font-roboto w-full p-2 whitespace-pre-wrap">
+                {data?.content}
+              </pre>
+            </div>
+            <hr />
+          </div>
+          <div className="flex justify-end my-4">
+            <Link
+              to={`/${type}`}
+              className="bg-orange-500 py-1 px-4 text-base text-white font-semibold ml-2 hover:bg-amber-400 rounded"
+            >
+              목록
+            </Link>
+            {user?._id === data?.user._id && (
+              <>
+                <Link
+                  to={`/${type}/${_id}/edit`}
+                  className="bg-gray-900 py-1 px-4 text-base text-white font-semibold ml-2 hover:bg-amber-400 rounded"
+                >
+                  수정
+                </Link>
+                <Submit bgColor="red">삭제</Submit>
+              </>
+            )}
+          </div>
+        </form>
       </section>
 
-      {/* 댓글 목록 */}
-      <CommentList postId={_id} />
+      {/* 부분 화면 로딩중 */}
+      {isLoading && (
+        <div className="flex flex-col items-center">
+          <h3 className="mb-4 text-lg font-semibold">잠시만 기다려주세요.</h3>
+          <span>로딩중...</span>
+        </div>
+      )}
+
+      {/* <CommentList replies={data?.replies} /> */}
+      <CommentList />
     </main>
   );
 }
-
-export default Detail;

@@ -1,76 +1,78 @@
-import Button from "@components/Button";
-import Pagination from "@components/Pagination";
-import Search from "@components/Search";
-import useDebounce from "@hooks/useDebounce";
-import useFetch from "@hooks/useFetch";
-import ListItem from "@pages/community/ListItem";
-import { userState } from "@recoil/user/atoms";
-import { useEffect, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { useRecoilValue } from "recoil";
+import Pagination from "@/components/Pagination";
+import Search from "@/components/Search";
+import Spinner from "@/components/Spinner";
+import ListItem from "@/pages/community/ListItem";
+import { useQuery } from "@tanstack/react-query";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 
-function List() {
-  const [keyword, setKeyword] = useState("");
-  const navigate = useNavigate();
-  const user = useRecoilValue(userState);
-  const limit = 10;
+const SERVER = import.meta.env.VITE_API_SERVER;
+
+async function fetchPosts(type, page, keyword) {
+  const params = new URLSearchParams();
+  params.set("type", type);
+  page && params.set("page", page);
+  keyword && params.set("keyword", keyword);
+  params.set("limit", import.meta.env.VITE_LIMIT);
+  params.set("delay", import.meta.env.VITE_DELAY);
+
+  const url = `${SERVER}/posts?${params.toString()}`;
+  const res = await fetch(url); // Promise 객체 반환
+  return res.json();
+}
+
+export default function List() {
   const { type } = useParams();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const page = searchParams.get("page") || 1;
+  const [searchParams] = useSearchParams();
 
-  // 디바운스
-  const debouncedKeyword = useDebounce(keyword, 500);
+  const { isLoading, data } = useQuery({
+    // const { isLoading, data, error } = useSuspenseQuery({
+    // query keys를 기반으로 해서 쿼리 캐싱을 관리한다.
+    queryKey: [type, searchParams.toString()],
+    queryFn: () => {
+      // Promise를 반환하는 함수
+      const page = searchParams.get("page");
+      const keyword = searchParams.get("keyword");
 
-  const { loading, data, error, refetch } = useFetch(
-    `/posts?type=${type}&limit=${limit}&page=${page}&keyword=${keyword}`
-  );
+      return fetchPosts(type, page, keyword);
+    },
+    staleTime: 1000 * 60, // query 실행 후 cache가 유지되는 시간 (default: 0)
+  });
 
-  useEffect(() => {
-    searchParams.set("page", 1);
-    setSearchParams(searchParams);
-    setKeyword("");
-    refetch();
-  }, [type]);
+  // const [data, setData] = useState();
 
-  useEffect(() => {
-    searchParams.set("page", 1);
-    setSearchParams(searchParams);
-    refetch();
-  }, [debouncedKeyword]);
+  // const fetchData = async (type) => {
+  //   const result = await fetchPosts(type);
+  //   setData(result.item);
+  // };
 
-  useEffect(() => {
-    refetch();
-  }, [page]);
+  // useEffect(() => {
+  //   fetchData(type);
+  // }, [type]);
 
-  let boardTitle = "";
+  const list = data?.item?.map((item) => (
+    <ListItem key={item._id} item={item} />
+  ));
 
-  switch (type) {
-    case "info":
-      boardTitle = "정보공유";
-      break;
-    case "post":
-      boardTitle = "자유게시판";
-      break;
-    case "qna":
-      boardTitle = "질문게시판";
-      break;
-    default:
-      boardTitle = "정보공유";
-  }
+  // if (isLoading) {
+  //   return <Spinner.FullScreen />;
+  // }
 
   return (
     <main className="min-w-80 p-10">
       <div className="text-center py-4">
         <h2 className="pb-4 text-2xl font-bold text-gray-700 dark:text-gray-200">
-          {boardTitle}
+          정보 공유
         </h2>
       </div>
       <div className="flex justify-end mr-4">
-        {/* 검색 */}
-        <Search keyword={keyword} setKeyword={setKeyword} />
-        {user && (
-          <Button onClick={() => navigate(`/${type}/new`)}>글작성</Button>
-        )}
+        <Search />
+
+        <Link
+          to={`/${type}/new`}
+          className="bg-orange-500 py-1 px-4 text-base text-white font-semibold ml-2 hover:bg-amber-400 rounded"
+        >
+          글작성
+        </Link>
       </div>
       <section className="pt-10">
         <table className="border-collapse w-full table-fixed">
@@ -99,44 +101,23 @@ function List() {
             </tr>
           </thead>
           <tbody>
-            {/* 게시글이 없을 때 상태 표시 */}
-            {data?.item.length === 0 && (
+            {isLoading && (
               <tr>
-                <td colSpan="6" className="py-20 text-center">
-                  게시글이 없습니다.
+                <td colSpan={6} className="py-20">
+                  <div className="flex flex-col items-center">
+                    <h3 className="mb-4 text-lg font-semibold">로딩 중...</h3>
+                    <Spinner.TargetArea />
+                  </div>
                 </td>
               </tr>
             )}
-
-            {/* 로딩 상태 표시 */}
-            {loading && (
-              <tr>
-                <td colSpan="6" className="py-20 text-center">
-                  로딩중...
-                </td>
-              </tr>
-            )}
-
-            {/* 에러 메세지 출력 */}
-            {error && (
-              <tr>
-                <td colSpan="6" className="py-20 text-center">
-                  에러 메세지
-                </td>
-              </tr>
-            )}
-
-            {/* 본문 출력 */}
-            <ListItem data={data} type={type} />
+            {list}
           </tbody>
         </table>
         <hr />
 
-        {/* 페이지네이션 */}
-        <Pagination type={type} totalPages={data?.pagination.totalPages} />
+        <Pagination {...data?.pagination} />
       </section>
     </main>
   );
 }
-
-export default List;
