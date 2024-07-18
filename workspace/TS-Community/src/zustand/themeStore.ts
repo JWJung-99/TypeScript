@@ -1,8 +1,13 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
+export interface ITheme {
+  isDarkMode: boolean;
+  toggleTheme: () => void;
+}
+
 // setter 함수를 인자로 받아서 객체를 return
-const useThemeStore = create(
+const useThemeStore = create<ITheme>()(
   persist(
     (set) => ({
       // 객체 내부에는 상태와 상태를 바꾸는 메서드를 정의
